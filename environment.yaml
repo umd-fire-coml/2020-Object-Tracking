@@ -1,0 +1,7 @@
+﻿name: object-tracking
+dependencies:
+    - tensorflow
+    - jupyterlab
+    - opencv
+    - matplotlib
+    - numpy
