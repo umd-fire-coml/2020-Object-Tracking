@@ -2,6 +2,6 @@
 dependencies:
     - tensorflow=2.0
     - jupyterlab
-    - opencv=4.4.0
+    - opencv
     - matplotlib=3.2.2
     - numpy=1.19.1
