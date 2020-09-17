@@ -1,0 +1,9 @@
+Object Tracking Datasets
+
+https://github.com/foolwood/SiamMask/tree/master/data/coco
+
+The instructions to download these files are in the readme :)
+
+https://github.com/dendorferpatrick/MOTChallengeEvalKit/tree/master/MOT
+
+The instructions are also included in the readme
