@@ -78,7 +78,7 @@ print ("total dataset size: %s bytes" % (dir_size("data/train") + dir_size("data
 
 
 
-
+# In[ ]:
 image = plt.imread('data/train/train2017/000000328599.jpg')
 plt.imshow(image)
 plt.show()
