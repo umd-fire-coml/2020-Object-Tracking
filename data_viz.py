@@ -33,16 +33,17 @@ def parse_data(annotation_file):
     for ann in dataset['annotations']:
         imgToAnns[ann['image_id']] += [ann]
         anns[ann['id']] = ann
-    categories = {category['id']: category for category in dataset['categories']}
+    categories = {category['id']: {"cat": category, "imgs": []} for category in dataset['categories']}
     cats = []
     catToImgs = []
     imgs  = {im['id']: {} for im in dataset['images']}
     for img in dataset['images']:
-        imgs[img['id']] = img
-        
-    
-
- 
+        if img["id"] in imgToAnns:
+            for seg in imgToAnns[img["id"]]:
+                categories[seg["category_id"]]["imgs"].append(seg)
+                # exit()
+            imgs[img['id']] = img
+     
     print('index created!')
     return imgToAnns,categories,imgs
 
@@ -50,7 +51,7 @@ def parse_data(annotation_file):
 # In[18]:
 
 
-imgToAnns, categories = parse_data(annotation_file)
+imgToAnns, categories, imgs = parse_data(annotation_file)
 
 
 # In[20]:
