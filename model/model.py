@@ -5,8 +5,54 @@ from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
 
 
+def aucMetric(true, pred):
+
+        #We want strictly 1D arrays - cannot have (batch, 1), for instance
+    true = (true - K.min(true))/(K.max(true) - K.min(true))
+    pred = (pred - K.min(pred))/(K.max(pred) - K.min(pred))
+    true= K.flatten(true)
+    pred = K.flatten(pred)
+
+        #total number of elements in this batch
+    totalCount = K.shape(true)[0]
+
+        #sorting the prediction values in descending order
+    values, indices = tf.nn.top_k(pred, k = totalCount)   
+        #sorting the ground truth values based on the predictions above         
+    sortedTrue = K.gather(true, indices)
+
+        #getting the ground negative elements (already sorted above)
+    negatives = 1 - sortedTrue
+
+        #the true positive count per threshold
+    TPCurve = K.cumsum(sortedTrue)
+
+        #area under the curve
+    auc = K.sum(TPCurve * negatives)
+
+       #normalizing the result between 0 and 1
+    totalCount = K.cast(totalCount, K.floatx())
+    positiveCount = K.sum(true)
+    negativeCount = totalCount - positiveCount
+    totalArea = positiveCount * negativeCount
+    return  auc / totalArea
+
 def loss_fn(y_true, y_pred):
-    return K.mean(tf.keras.losses.BinaryCrossentropy()(y_true, y_pred))
+    loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_pred, labels=y_true)#K.mean(tf.keras.losses.BinaryCrossentropy()(y_true, y_pred))
+    n_pos = tf.reduce_sum(tf.cast(tf.equal(y_true[0], 1), tf.float32))
+    n_neg = tf.reduce_sum(tf.cast(tf.equal(y_true[0], 0), tf.float32))
+    w_pos = 0.5 / n_pos
+    w_neg = 0.5 / n_neg
+    class_weights = tf.where(tf.equal(y_true, 1),
+                                w_pos * tf.ones_like(y_true),
+                                tf.ones_like(y_true))
+    class_weights = tf.where(tf.equal(y_true, 0),
+                                w_neg * tf.ones_like(y_true),
+                                class_weights)
+    loss = loss * class_weights
+    loss = tf.reduce_sum(loss, [1, 2])
+    loss = tf.reduce_mean(loss)
+    return loss
 
 def loss_exp_fn(inputs):
     y_true, y_pred = inputs
@@ -63,9 +109,6 @@ def cross_correlation(inputs):
 def x_corr_map(inputs):
     # Note that dtype MUST be specified, otherwise TF will assert that the input and output structures are the same,
     # which they most certainly are NOT.
-    print (cross_correlation(inputs[0]).shape)
-    x = tf.map_fn(cross_correlation, inputs, dtype=tf.float32, infer_shape=True)
-    print (x.shape)
     return K.reshape(tf.map_fn(cross_correlation, inputs, dtype=tf.float32, infer_shape=False), shape=(-1,17,17))
     
 def x_corr_layer():
@@ -81,6 +124,16 @@ def make_model(x_shape, z_shape, w_loss=False):
     exemplar_features = apply_layers(exemplar, alex_net)
     search_features = apply_layers(search, alex_net)
     score_map = x_corr_layer()([search_features, exemplar_features])
+    # bias = tf.get_variable('biases', [1],
+    #                          dtype=tf.float32,
+    #                          initializer=tf.constant_initializer(0.0, dtype=tf.float32),
+    #                          trainable=True)#config['train_bias'])
+    bias = tf.Variable(
+        initial_value=[0.0], trainable=True,
+        name="biases", dtype=tf.float32, shape=[1]
+    )
+    score_map = 1e-3 * score_map + bias
+    # score_map = tf.keras.activations.sigmoid(score_map)
     
     outputs = [score_map]
     inputs = [search, exemplar]
@@ -90,5 +143,5 @@ def make_model(x_shape, z_shape, w_loss=False):
         outputs = outputs + [loss_layer]
         inputs = inputs + [label_input]
     model = Model(inputs=inputs, outputs=outputs)
-    model.compile(optimizer='adam', loss=loss_fn, metrics=['accuracy'])
+    model.compile(optimizer='adam', loss=loss_fn, metrics=[aucMetric])
     return model
