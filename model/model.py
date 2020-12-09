@@ -39,6 +39,7 @@ def aucMetric(true, pred):
 
 def loss_fn(y_true, y_pred):
     loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_pred, labels=y_true)#K.mean(tf.keras.losses.BinaryCrossentropy()(y_true, y_pred))
+
     n_pos = tf.reduce_sum(tf.cast(tf.equal(y_true[0], 1), tf.float32))
     n_neg = tf.reduce_sum(tf.cast(tf.equal(y_true[0], 0), tf.float32))
     w_pos = 0.5 / n_pos
@@ -106,15 +107,32 @@ def cross_correlation(inputs):
     z = tf.reshape(z, z.shape.as_list() + [1])
     return tf.nn.convolution(x, z, padding='VALID', strides=(1,1))
 
-def x_corr_map(inputs):
-    # Note that dtype MUST be specified, otherwise TF will assert that the input and output structures are the same,
-    # which they most certainly are NOT.
-    return K.reshape(tf.map_fn(cross_correlation, inputs, dtype=tf.float32, infer_shape=False), shape=(-1,17,17))
+def x_corr_map(x):
+
+    def _translation_match(i):  # translation match for one example within a batch
+        x, z = i[0], i[1]
+        x = tf.expand_dims(x, 0)  # [1, in_height, in_width, in_channels]
+        z = tf.expand_dims(z, -1)  # [filter_height, filter_width, in_channels, 1]
+        return tf.nn.conv2d(x, z, strides=[1, 1, 1, 1], padding='VALID', name='translation_match')
+
+    output = tf.map_fn(_translation_match, x, dtype=tf.float32)
+    output = tf.squeeze(output, [1, 4])  # of shape e.g., [8, 15, 15]
+
+      # Adjust score, this is required to make training possible.
+    
+    return output
+    # self.response = response
+
+
+
+    # # Note that dtype MUST be specified, otherwise TF will assert that the input and output structures are the same,
+    # # which they most certainly are NOT.
+    # return K.reshape(tf.map_fn(cross_correlation, inputs, dtype=tf.float32, infer_shape=False), shape=(-1,17,17))
     
 def x_corr_layer():
     return Lambda(x_corr_map, output_shape=(17, 17))
 
-def make_model(x_shape, z_shape, w_loss=False):
+def make_model(x_shape, z_shape, w_loss=False, decay_steps=0):
     exemplar = Input(shape=z_shape)
     search = Input(shape=x_shape)
     label_input = Input(shape=(17,17))
@@ -128,12 +146,13 @@ def make_model(x_shape, z_shape, w_loss=False):
     #                          dtype=tf.float32,
     #                          initializer=tf.constant_initializer(0.0, dtype=tf.float32),
     #                          trainable=True)#config['train_bias'])
+    
+    # score_map = tf.keras.activations.sigmoid(score_map)
     bias = tf.Variable(
         initial_value=[0.0], trainable=True,
         name="biases", dtype=tf.float32, shape=[1]
     )
     score_map = 1e-3 * score_map + bias
-    # score_map = tf.keras.activations.sigmoid(score_map)
     
     outputs = [score_map]
     inputs = [search, exemplar]
@@ -143,5 +162,15 @@ def make_model(x_shape, z_shape, w_loss=False):
         outputs = outputs + [loss_layer]
         inputs = inputs + [label_input]
     model = Model(inputs=inputs, outputs=outputs)
-    model.compile(optimizer='adam', loss=loss_fn, metrics=[aucMetric])
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        0.01,
+        decay_steps=decay_steps,
+        decay_rate=0.8685113737513527,
+        staircase=True
+    )
+    opt = tf.keras.optimizers.SGD(
+                learning_rate=lr_schedule, momentum=0.9, nesterov=False, name='SGD'
+            )
+   
+    model.compile(optimizer=opt, loss=loss_fn, metrics=[aucMetric])
     return model

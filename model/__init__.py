@@ -1,1 +1,1 @@
-from .model import make_model
+from .model import *
