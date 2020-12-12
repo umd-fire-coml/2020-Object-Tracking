@@ -27,6 +27,5 @@ Run the python create_video.py. Just make sure you go into the create_video.py f
 
 ## Citations
 Jason Brownlee. 2019. A Gentle Introduction to Cross-Entropy for Machine Learning. (December 2019). Retrieved December 11, 2020 from https://machinelearningmastery.com/cross-entropy-for-machine-learning/ 
-
 Richmond Alake. 2020. Implementing AlexNet CNN Architecture Using TensorFlow 2.0+ and Keras. (August 2020). Retrieved December 10, 2020 from https://towardsdatascience.com/implementing-alexnet-cnn-architecture-using-tensorflow-2-0-and-keras-2113e090ad98 
 Sunita Nayak. 2018. Understanding AlexNet. (June 2018). Retrieved December 10, 2020 from https://www.learnopencv.com/understanding-alexnet/ 
