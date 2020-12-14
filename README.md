@@ -21,6 +21,8 @@ A loss function used in this model is a cross entropy loss function. The loss is
 ![Alt text](samples/video.gif "Sample Video")
 
 ## Youtube Video
+[![Youtube Link](https://img.youtube.com/vi/-gUxGlvW7ks/0.jpg)](https://www.youtube.com/watch?v=-gUxGlvW7ks)
+https://www.youtube.com/watch?v=-gUxGlvW7ks
 
 ## Directory Guide
 Data_Vizualization-2.py - provides a visualization of the bounding boxes upon an image
