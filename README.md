@@ -16,7 +16,26 @@ A loss function used in this model is a cross entropy loss function. The loss is
 
 ## Youtube Video
 
-## Directory Guide 
+## Directory Guide
+Data_Vizualization-2.py - provides a visualization of the bounding boxes upon an image
+
+data.download.py - downloads the data for training and annotations of the images 
+
+data_generator.py - generates an image and constructs a score map for that image
+
+env_checker_script.py - ensures that the correct environment was set up by the user
+
+environment.yaml - sets up the environment for the user
+
+image_augmenter.py - augments the image by creating the bounding boxes 
+
+processor—visualization.py - script create to check the work on the data generator 
+
+create_video.py - creates a video based on the test data
+
+train.py - used to train the model
+
+utils.py - utility file that provides functions for other files
 
 ## How to get the training started
 First, you need to install the environment.yaml and activate it with anaconda.
@@ -24,6 +43,7 @@ Then, go to the [Lasot](http://vision.cs.stonybrook.edu/~lasot/) dataset, and do
 
 ## Testing and Visualization Notebook
 Run the python create_video.py. Just make sure you go into the create_video.py file and modify what folder you want to use in the test folder.
+https://colab.research.google.com/drive/1N6iv5DFCrvkdAvlU3xLz87_mMWimnAUk?usp=sharing
 
 ## Citations
 Jason Brownlee. 2019. A Gentle Introduction to Cross-Entropy for Machine Learning. (December 2019). Retrieved December 11, 2020 from https://machinelearningmastery.com/cross-entropy-for-machine-learning/ 
